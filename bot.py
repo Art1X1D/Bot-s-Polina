@@ -5,6 +5,8 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 import asyncio
+import os
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # 🔑 ТОКЕН
 BOT_TOKEN = "8279208591:AAFCjLhs7IKew1dPZc2O8WwKrJodkaX4T70"
