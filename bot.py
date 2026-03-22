@@ -41,23 +41,17 @@ GIFTS = {
     ],
     "sport": [
         {
-            "photo": "https://ir.ozone.ru/s3/multimedia-1-h/7512943697.jpg",
-            "caption": "Спортивная бутылка для воды ⚽️",
-            "url": "https://t.me/pike_msk_bot?start=sport_1"
+            
         }
     ],
     "travel": [
         {
-            "photo": "https://ir.ozone.ru/s3/multimedia-1-h/7512943697.jpg",
-            "caption": "Складной чемодан для путешествий 🗺️",
-            "url": "https://t.me/pike_msk_bot?start=travel_1"
+            
         }
     ],
     "hobbies": [
         {
-            "photo": "https://ir.ozone.ru/s3/multimedia-1-h/7512943697.jpg",
-            "caption": "Набор для творчества 🧩",
-            "url": "https://t.me/pike_msk_bot?start=hobbies_1"
+            
         }
     ],
     "style": [
@@ -69,37 +63,27 @@ GIFTS = {
     ],
     "health": [
         {
-            "photo": "https://ir.ozone.ru/s3/multimedia-1-h/7512943697.jpg",
-            "caption": "Массажер для шеи 🧘‍♀️",
-            "url": "https://t.me/pike_msk_bot?start=health_1"
+            "
         }
     ],
     "edible": [
         {
-            "photo": "https://ir.ozone.ru/s3/multimedia-1-h/7512943697.jpg",
-            "caption": "Подарочный набор пекаря 🥨",
-            "url": "https://t.me/pike_msk_bot?start=edible_1"
+            
         }
     ],
     "experiences": [
         {
-            "photo": "https://ir.ozone.ru/s3/multimedia-1-h/7512943697.jpg",
-            "caption": "Сертификат на мастер-класс 🧭",
-            "url": "https://t.me/pike_msk_bot?start=experiences_1"
+            
         }
     ],
     "pets": [
         {
-            "photo": "https://ir.ozone.ru/s3/multimedia-1-h/7512943697.jpg",
-            "caption": "Игрушка для собаки 🐶",
-            "url": "https://t.me/pike_msk_bot?start=pets_1"
+            
         }
     ],
     "date": [
         {
-            "photo": "https://ir.ozone.ru/s3/multimedia-1-h/7512943697.jpg",
-            "caption": "Сертификат в романтическое кафе 🍸",
-            "url": "https://t.me/pike_msk_bot?start=date_1"
+            
         }
     ],
 }
