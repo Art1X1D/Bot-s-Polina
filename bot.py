@@ -8,7 +8,7 @@ import asyncio
 import os
 from datetime import datetime
 
-# === GOOGLE SHEETS INTEGRATION (без файла, через переменную) ===
+#GOOGLE SHEETS INTEGRATION (через переменную) 
 import os
 import json
 from google.oauth2.service_account import Credentials
@@ -22,7 +22,7 @@ try:
 
     creds_info = json.loads(creds_json_str)
     
-    # ✅ Правильная передача scopes
+   
     SCOPES = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
@@ -52,7 +52,7 @@ def log_to_sheet(user_id, action, category=None, url=None):
     except Exception as e:
         print(f"❌ Ошибка записи в Google Sheets: {e}")
 
-# === TELEGRAM BOT SETUP ===
+#TELEGRAM BOT SETUP
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("❌ Переменная окружения BOT_TOKEN не задана!")
@@ -62,7 +62,7 @@ dp = Dispatcher()
 router = Router()
 dp.include_router(router)
 
-# 🏷️ Категории
+#Категории
 CATEGORIES = {
     "home": "🏡 Для дома",
     "sport": "⚽️ Спорт",
@@ -70,13 +70,10 @@ CATEGORIES = {
     "hobbies": "🧩 Увлечения",
     "style": "👜 Стиль",
     "health": "🧘‍♀️ Здоровье и красота",
-    "edible": "🥨 Съедобное",
-    "experiences": "🧭 Впечатления",
-    "pets": "🐶 Питомцы",
-    "date": "🍸 Куда сводить",
+    #Сюда можно добавлять названия категорий
 }
 
-# 💝 Подарки — все URL очищены от пробелов
+#Подарки — все URL очищены от пробелов
 GIFTS = {
     "home": [
         {
@@ -118,6 +115,7 @@ GIFTS = {
             "url": "https://www.wildberries.ru/catalog/331956677/detail.aspx"
         }
     ],
+    #Аналогично можно добавлять различные категории
 }
 
 class GiftState(StatesGroup):
@@ -210,7 +208,7 @@ async def navigate_gifts(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.startswith("buy:"))
 async def handle_buy(callback: CallbackQuery, state: FSMContext):
-    # Разбираем: buy:sport:1
+    
     parts = callback.data.split(":")
     if len(parts) != 3:
         return
@@ -224,10 +222,10 @@ async def handle_buy(callback: CallbackQuery, state: FSMContext):
 
     item = gifts[index]
     
-    # ✅ ЛОГИРУЕМ ТОЛЬКО ЗДЕСЬ — при реальном нажатии «Купить»
+    # ✅ ЛОГИРУЕМ тольк реальное нажатиие «Купить»
     log_to_sheet(callback.from_user.id, "buy", category=cat, url=item["url"])
 
-    # Открываем ссылку во внешнем браузере (как раньше)
+   
     await callback.answer(
         "Переход к товару...",
         url=item["url"],
