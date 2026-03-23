@@ -32,8 +32,8 @@ except Exception as e:
     print(f"⚠️ Google Sheets НЕ подключён: {e}")
     sheet = None
 
-def log_to_sheet(user_id, action, category=None):
-    """Логирует событие БЕЗ URL"""
+def log_to_sheet(user_id, action, category=None, item_name=None):
+    """Логирует событие с названием подарка вместо URL"""
     if not sheet:
         return
     try:
@@ -42,12 +42,12 @@ def log_to_sheet(user_id, action, category=None):
             str(user_id),
             action,
             category or "",
-            ""  # ← всегда пусто
+            item_name or ""
         ]
         sheet.append_row(row)
-        print(f"📊 Запись в таблицу: {action} | {category}")
+        print(f"📊 Запись: {action} | {category} | {item_name}")
     except Exception as e:
-        print(f"❌ Ошибка записи в Google Sheets: {e}")
+        print(f"❌ Ошибка записи: {e}")
 
 # === TELEGRAM BOT SETUP ===
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -104,7 +104,7 @@ GIFTS = {
             "url": "https://www.ozon.ru/product/nabor-dlya-bolshogo-tennisa-1762914482/?at=oZt6GZrXNT588m8wsBYLwp7TW3m0oKID3PEG3CgJp4n4"
         }
     ],
-    "health": [],  # ← убран пустой элемент
+    "health": [],  # пустая категория — без подарков
 }
 
 class GiftState(StatesGroup):
@@ -172,7 +172,12 @@ async def show_first_gift(callback: CallbackQuery, state: FSMContext):
         await callback.message.edit_media(media=media, reply_markup=gift_nav_kb(cat, 0, len(GIFTS[cat])))
         await state.update_data(category=cat, gifts=GIFTS[cat], gift_index=0)
         await state.set_state(GiftState.showing_gifts)
-        log_to_sheet(callback.from_user.id, "category", category=cat)
+        log_to_sheet(
+            user_id=callback.from_user.id,
+            action="category",
+            category=cat,
+            item_name=item["caption"]  # ← можно добавить, если хотите
+        )
     except Exception as e:
         print(f"Ошибка загрузки фото: {e}")
         await callback.answer("Не удалось загрузить подарок 😕", show_alert=True)
@@ -190,8 +195,14 @@ async def navigate_gifts(callback: CallbackQuery, state: FSMContext):
         media = InputMediaPhoto(media=item["photo"], caption=item["caption"])
         await callback.message.edit_media(media=media, reply_markup=gift_nav_kb(cat, index, len(gifts)))
         await state.update_data(gift_index=index)
-        # Логируем ПРОСМОТР без URL
-        log_to_sheet(callback.from_user.id, "view", category=cat)
+        
+        # Логируем ПРОСМОТР с названием подарка
+        log_to_sheet(
+            user_id=callback.from_user.id,
+            action="view",
+            category=cat,
+            item_name=item["caption"]
+        )
     except Exception as e:
         print(f"Ошибка при навигации: {e}")
         await callback.answer("Ошибка загрузки 😕", show_alert=True)
