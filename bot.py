@@ -6,10 +6,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 import asyncio
 import os
-BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# 🔑 ТОКЕН
-BOT_TOKEN = "8279208591:AAFCjLhs7IKew1dPZc2O8WwKrJodkaX4T70"
+# 🔑 Получаем токен из переменной окружения (для Railway/Render)
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+if not BOT_TOKEN:
+    raise ValueError("❌ Переменная окружения BOT_TOKEN не задана!")
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
@@ -30,28 +31,13 @@ CATEGORIES = {
     "date": "🍸 Куда сводить",
 }
 
-# 💝 Подарки — ВСЕГДА список словарей!
+# 💝 Подарки — только заполненные категории
 GIFTS = {
     "home": [
         {
             "photo": "https://ir.ozone.ru/s3/multimedia-1-h/7512943697.jpg",
             "caption": "Уютный плед для дома 🏡",
             "url": "https://t.me/pike_msk_bot?start=home_1"
-        }
-    ],
-    "sport": [
-        {
-            
-        }
-    ],
-    "travel": [
-        {
-            
-        }
-    ],
-    "hobbies": [
-        {
-            
         }
     ],
     "style": [
@@ -61,31 +47,28 @@ GIFTS = {
             "url": "https://t.me/pike_msk_bot?start=style_1"
         }
     ],
+    "hobbies": [
+        {
+            "photo": "https://papershoot.ru/paper-camera/tproduct/1208941196-929640940941-vintage-1925",
+            "caption": "Бумажная камера со сменными кейсами",
+            "url": "https://papershoot.ru/catalog"
+        }
+    ],
+    "sport": [
+        {
+            "photo": "https://market.yandex.ru/card/flyaga-silikonovaya-myagkaya-s-remeshkom-dlya-gidratora-dlya-bega-500ml",
+            "caption": "Мягкая фляга для бега и походов",
+            "url": "https://market.yandex.ru/card/flyaga-silikonovaya-myagkaya-s-remeshkom-dlya-gidratora-dlya-bega-500ml"
+        }
+    ],
     "health": [
         {
-            "
+            "photo": "https://aliexpress.ru/item/1005006255577739.html",
+            "caption": "Ручной тренажер для большого тенниса",
+            "url": "https://www.wildberries.ru/catalog/331956677/detail.aspx"
         }
     ],
-    "edible": [
-        {
-            
-        }
-    ],
-    "experiences": [
-        {
-            
-        }
-    ],
-    "pets": [
-        {
-            
-        }
-    ],
-    "date": [
-        {
-            
-        }
-    ],
+    # Остальные категории можно добавить позже
 }
 
 class GiftState(StatesGroup):
@@ -95,7 +78,9 @@ class GiftState(StatesGroup):
 def categories_kb():
     builder = InlineKeyboardBuilder()
     for key, label in CATEGORIES.items():
-        builder.button(text=label, callback_data=f"cat:{key}")
+        # Показываем только категории, где есть подарки
+        if key in GIFTS and GIFTS[key]:
+            builder.button(text=label, callback_data=f"cat:{key}")
     builder.adjust(2)
     return builder.as_markup()
 
@@ -108,7 +93,6 @@ def gift_nav_kb(category: str, index: int, total: int):
         builder.button(text="▶️ Вперёд", callback_data=f"gift:{category}:{index+1}")
     builder.button(text="🏠 Главное меню", callback_data="main_menu")
     
-    # Настройка кнопок: максимум 2 в первой строке (навигация), остальное — отдельно
     if total == 1:
         builder.adjust(1, 1)
     elif index == 0 or index == total - 1:
@@ -143,23 +127,22 @@ async def back_to_main(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(GiftState.choosing_category, F.data.startswith("cat:"))
 async def show_first_gift(callback: CallbackQuery, state: FSMContext):
     cat = callback.data.split(":")[1]
-    gifts = GIFTS.get(cat, [])
-    if not gifts:
-        await callback.answer("Подарков пока нет 😢", show_alert=True)
+    if cat not in GIFTS or not GIFTS[cat]:
+        await callback.answer("Подарков в этой категории пока нет 😢", show_alert=True)
         return
 
-    await state.update_data(category=cat, gifts=gifts, gift_index=0)
+    await state.update_data(category=cat, gifts=GIFTS[cat], gift_index=0)
     await state.set_state(GiftState.showing_gifts)
 
-    item = gifts[0]
+    item = GIFTS[cat][0]
     media = InputMediaPhoto(media=item["photo"], caption=item["caption"])
-    await callback.message.edit_media(media=media, reply_markup=gift_nav_kb(cat, 0, len(gifts)))
+    await callback.message.edit_media(media=media, reply_markup=gift_nav_kb(cat, 0, len(GIFTS[cat])))
 
 @router.callback_query(GiftState.showing_gifts, F.data.startswith("gift:"))
 async def navigate_gifts(callback: CallbackQuery, state: FSMContext):
     _, cat, idx_str = callback.data.split(":")
     index = int(idx_str)
-    gifts = GIFTS[cat]
+    gifts = GIFTS.get(cat, [])
     if index < 0 or index >= len(gifts):
         return
 
