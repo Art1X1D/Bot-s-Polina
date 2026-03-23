@@ -81,7 +81,7 @@ GIFTS = {
         {
             "photo": "https://ir.ozone.ru/s3/multimedia-1-h/7512943697.jpg",
             "caption": "Чёрный фон",
-            "url": "https://papershoot.ru/catalog"
+            "url": "https://www.ozon.ru/product/fotofon-hromakey-1-5h2-metra-chernyy-606611928/?at=OgtEX4pAVIklpXl4T30ZLGJFk0kLVwt1r9pvlUkkm3K2"
         }
     ],
     "hobbies": [
@@ -95,19 +95,17 @@ GIFTS = {
         {
             "photo": "https://img-edg.joomcdn.net/eb767a9d1cf723fbc9cb3cd3682484a14a8ab921_original.jpeg",
             "caption": "Мягкая фляга для бега и походов",
-            "url": "https://papershoot.ru/catalog"
+            "url": "https://www.ozon.ru/product/butylka-dlya-vody-sportivnaya-250-ml-myagkaya-flyaga-dlya-bega-325671713/?at=QktJqrk6GcGWBVQ9tGAWV1QtynXlM6hPR0j7yHZAq6pQ"
         },
         {
             "photo": "https://ae04.alicdn.com/kf/S9c6601c12b87435abd95c850f1ca5db3k.jpg_640x640.jpg",
             "caption": "Ручной тренажер для большого тенниса",
-            "url": "https://papershoot.ru/catalog"
+            "url": "https://www.ozon.ru/product/nabor-dlya-bolshogo-tennisa-1762914482/?at=oZt6GZrXNT588m8wsBYLwp7TW3m0oKID3PEG3CgJp4n4"
         }
     ],
     "health": [
         {
-            "photo": "https://ae04.alicdn.com/kf/S9c6601c12b87435abd95c850f1ca5db3k.jpg_640x640.jpg",
-            "caption": "Ручной тренажер для большого тенниса",
-            "url": "https://papershoot.ru/catalog"
+            
         }
     ],
 }
