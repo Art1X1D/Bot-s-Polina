@@ -208,7 +208,6 @@ async def navigate_gifts(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.startswith("buy:"))
 async def handle_buy(callback: CallbackQuery, state: FSMContext):
-    
     parts = callback.data.split(":")
     if len(parts) != 3:
         return
@@ -221,14 +220,20 @@ async def handle_buy(callback: CallbackQuery, state: FSMContext):
         return
 
     item = gifts[index]
-    
-    # ✅ ЛОГИРУЕМ тольк реальное нажатиие «Купить»
-    log_to_sheet(callback.from_user.id, "buy", category=cat, url=item["url"])
+    clean_url = item["url"].strip()
 
-   
+    #Проверка: URL должен быть валидным
+    if not clean_url.startswith(("http://", "https://")):
+        await callback.answer("Ссылка на товар повреждена", show_alert=True)
+        return
+
+    # Логируем только реальное нажатие «Купить»
+    log_to_sheet(callback.from_user.id, "buy", category=cat, url=clean_url)
+
+ 
     await callback.answer(
-        "Переход к товару...",
-        url=item["url"],
+        text="Переход к товару...",
+        url=clean_url,
         show_alert=False
     )
 
