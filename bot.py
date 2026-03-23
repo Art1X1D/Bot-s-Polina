@@ -8,7 +8,7 @@ import asyncio
 import os
 from datetime import datetime
 
-#GOOGLE SHEETS INTEGRATION
+# === GOOGLE SHEETS INTEGRATION ===
 import json
 from google.oauth2.service_account import Credentials
 import gspread
@@ -32,7 +32,8 @@ except Exception as e:
     print(f"⚠️ Google Sheets НЕ подключён: {e}")
     sheet = None
 
-def log_to_sheet(user_id, action, category=None, url=None):
+def log_to_sheet(user_id, action, category=None):
+    """Логирует событие БЕЗ URL"""
     if not sheet:
         return
     try:
@@ -41,14 +42,14 @@ def log_to_sheet(user_id, action, category=None, url=None):
             str(user_id),
             action,
             category or "",
-            url or ""
+            ""  # ← всегда пусто
         ]
         sheet.append_row(row)
         print(f"📊 Запись в таблицу: {action} | {category}")
     except Exception as e:
         print(f"❌ Ошибка записи в Google Sheets: {e}")
 
-#TELEGRAM BOT SETUP
+# === TELEGRAM BOT SETUP ===
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("❌ Переменная окружения BOT_TOKEN не задана!")
@@ -58,7 +59,7 @@ dp = Dispatcher()
 router = Router()
 dp.include_router(router)
 
-#Категории
+# 🏷️ Категории
 CATEGORIES = {
     "home": "🏡 Для дома",
     "sport": "⚽️ Спорт",
@@ -68,7 +69,7 @@ CATEGORIES = {
     "health": "🧘‍♀️ Здоровье и красота",
 }
 
-#Подарки 
+# 💝 Подарки — все URL и фото очищены от пробелов
 GIFTS = {
     "home": [
         {
@@ -103,11 +104,7 @@ GIFTS = {
             "url": "https://www.ozon.ru/product/nabor-dlya-bolshogo-tennisa-1762914482/?at=oZt6GZrXNT588m8wsBYLwp7TW3m0oKID3PEG3CgJp4n4"
         }
     ],
-    "health": [
-        {
-            
-        }
-    ],
+    "health": [],  # ← убран пустой элемент
 }
 
 class GiftState(StatesGroup):
@@ -126,7 +123,6 @@ def gift_nav_kb(category: str, index: int, total: int):
     builder = InlineKeyboardBuilder()
     if index > 0:
         builder.button(text="🔙 Назад", callback_data=f"gift:{category}:{index-1}")
-    
     builder.button(text="💳 Купить", url=GIFTS[category][index]["url"])
     if index < total - 1:
         builder.button(text="▶️ Вперёд", callback_data=f"gift:{category}:{index+1}")
@@ -194,8 +190,8 @@ async def navigate_gifts(callback: CallbackQuery, state: FSMContext):
         media = InputMediaPhoto(media=item["photo"], caption=item["caption"])
         await callback.message.edit_media(media=media, reply_markup=gift_nav_kb(cat, index, len(gifts)))
         await state.update_data(gift_index=index)
-        
-        log_to_sheet(callback.from_user.id, "view", category=cat, url=item["url"])
+        # Логируем ПРОСМОТР без URL
+        log_to_sheet(callback.from_user.id, "view", category=cat)
     except Exception as e:
         print(f"Ошибка при навигации: {e}")
         await callback.answer("Ошибка загрузки 😕", show_alert=True)
