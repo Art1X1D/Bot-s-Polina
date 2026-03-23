@@ -16,6 +16,11 @@ import gspread
 raw_sheet = None      # Первый лист: сырые события
 analytics_sheet = None  # Второй лист: для аналитики
 
+# Агрегированные данные (в памяти)
+unique_users = set()
+category_counts = {}
+item_counts = {}
+
 try:
     creds_json_str = os.getenv("CREDENTIALS_JSON")
     if not creds_json_str:
@@ -39,7 +44,50 @@ except Exception as e:
     raw_sheet = None
     analytics_sheet = None
 
+def update_analytics(user_id, action, category=None, item_name=None):
+    """Обновляет агрегированную статистику и записывает в лист 'Аналитика'"""
+    global unique_users, category_counts, item_counts
+
+    # Уникальные пользователи
+    unique_users.add(str(user_id))
+
+    # Подсчёт просмотров
+    if action == "view":
+        if category:
+            category_counts[category] = category_counts.get(category, 0) + 1
+        if item_name:
+            item_counts[item_name] = item_counts.get(item_name, 0) + 1
+
+    # Запись в лист 'Аналитика'
+    if not analytics_sheet:
+        return
+
+    try:
+        # Формируем строку итогов
+        total_users = len(unique_users)
+        cats_str = "; ".join([f"{k}: {v}" for k, v in sorted(category_counts.items())])
+        items_str = "; ".join([f"{k}: {v}" for k, v in sorted(item_counts.items())])
+
+        # Очищаем и перезаписываем лист
+        analytics_sheet.clear()
+        analytics_sheet.update([[
+            "Время последнего обновления",
+            "Уникальные пользователи",
+            "Популярность по категориям",
+            "Популярность по подаркам"
+        ]])
+        analytics_sheet.append_row([
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            total_users,
+            cats_str,
+            items_str
+        ])
+        print(f"📊 Аналитика обновлена: {total_users} уникальных пользователей")
+    except Exception as e:
+        print(f"❌ Ошибка записи в Аналитику: {e}")
+
 def log_to_sheet(user_id, action, category=None, item_name=None):
+    """Логирует событие и обновляет аналитику"""
     timestamp = datetime.now().isoformat()
     row = [timestamp, str(user_id), action, category or "", item_name or ""]
     
@@ -48,16 +96,10 @@ def log_to_sheet(user_id, action, category=None, item_name=None):
         try:
             raw_sheet.append_row(row)
         except Exception as e:
-            print(f"❌ Ошибка записи в сырой лист: {e}")
-    
-    # Запись во второй лист (аналитика) — только события start и view
-    if analytics_sheet and action in ("start", "view"):
-        try:
-            analytics_sheet.append_row(row)
-        except Exception as e:
-            print(f"❌ Ошибка записи в аналитический лист: {e}")
-    
-    print(f"📊 Запись: {action} | {category} | {item_name}")
+            print(f"❌ Ошибка записи в Статистику: {e}")
+
+    # Обновление агрегированной аналитики
+    update_analytics(user_id, action, category, item_name)
 
 #TELEGRAM BOT SETUP
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -69,7 +111,7 @@ dp = Dispatcher()
 router = Router()
 dp.include_router(router)
 
-# 🏷️ Категории
+#Категории
 CATEGORIES = {
     "home": "🏡 Для дома",
     "sport": "⚽️ Спорт",
@@ -79,7 +121,7 @@ CATEGORIES = {
     "health": "🧘‍♀️ Здоровье и красота",
 }
 
-# 💝 Подарки — все URL и фото очищены от пробелов
+#Подарки
 GIFTS = {
     "home": [
         {
@@ -114,7 +156,7 @@ GIFTS = {
             "url": "https://www.ozon.ru/product/nabor-dlya-bolshogo-tennisa-1762914482/?at=oZt6GZrXNT588m8wsBYLwp7TW3m0oKID3PEG3CgJp4n4"
         }
     ],
-    "health": [],  # пустая категория — без подарков
+    "health": [],  
 }
 
 class GiftState(StatesGroup):
@@ -184,9 +226,9 @@ async def show_first_gift(callback: CallbackQuery, state: FSMContext):
         await state.set_state(GiftState.showing_gifts)
         log_to_sheet(
             user_id=callback.from_user.id,
-            action="category",
+            action="view",  
             category=cat,
-            item_name=item["caption"]  # ← можно добавить, если хотите
+            item_name=item["caption"]
         )
     except Exception as e:
         print(f"Ошибка загрузки фото: {e}")
@@ -206,7 +248,6 @@ async def navigate_gifts(callback: CallbackQuery, state: FSMContext):
         await callback.message.edit_media(media=media, reply_markup=gift_nav_kb(cat, index, len(gifts)))
         await state.update_data(gift_index=index)
         
-        # Логируем ПРОСМОТР с названием подарка
         log_to_sheet(
             user_id=callback.from_user.id,
             action="view",
