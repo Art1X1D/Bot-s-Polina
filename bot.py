@@ -136,7 +136,7 @@ def gift_nav_kb(category: str, index: int, total: int):
     builder = InlineKeyboardBuilder()
     if index > 0:
         builder.button(text="🔙 Назад", callback_data=f"gift:{category}:{index-1}")
-    builder.button(text="💳 Купить", url=GIFTS[category][index]["url"])
+    builder.button(text="💳 Купить", callback_data=f"buy:{category}:{index}")
     if index < total - 1:
         builder.button(text="▶️ Вперёд", callback_data=f"gift:{category}:{index+1}")
     builder.button(text="🏠 Главное меню", callback_data="main_menu")
@@ -203,10 +203,36 @@ async def navigate_gifts(callback: CallbackQuery, state: FSMContext):
         media = InputMediaPhoto(media=item["photo"], caption=item["caption"])
         await callback.message.edit_media(media=media, reply_markup=gift_nav_kb(cat, index, len(gifts)))
         await state.update_data(gift_index=index)
-        log_to_sheet(callback.from_user.id, "buy", category=cat, url=item["url"])
+        
     except Exception as e:
         print(f"Ошибка при навигации: {e}")
         await callback.answer("Ошибка загрузки 😕", show_alert=True)
+
+@router.callback_query(F.data.startswith("buy:"))
+async def handle_buy(callback: CallbackQuery, state: FSMContext):
+    # Разбираем: buy:sport:1
+    parts = callback.data.split(":")
+    if len(parts) != 3:
+        return
+    _, cat, idx_str = parts
+    index = int(idx_str)
+
+    gifts = GIFTS.get(cat, [])
+    if index < 0 or index >= len(gifts):
+        await callback.answer("Товар не найден", show_alert=True)
+        return
+
+    item = gifts[index]
+    
+    # ✅ ЛОГИРУЕМ ТОЛЬКО ЗДЕСЬ — при реальном нажатии «Купить»
+    log_to_sheet(callback.from_user.id, "buy", category=cat, url=item["url"])
+
+    # Открываем ссылку во внешнем браузере (как раньше)
+    await callback.answer(
+        "Переход к товару...",
+        url=item["url"],
+        show_alert=False
+    )
 
 async def main():
     print("✅ Бот запущен!")
