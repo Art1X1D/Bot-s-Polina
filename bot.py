@@ -8,12 +8,31 @@ import asyncio
 import os
 from datetime import datetime
 
-# === GOOGLE SHEETS INTEGRATION ===
+# === GOOGLE SHEETS INTEGRATION (без файла, через переменную) ===
+import os
+import json
+from datetime import datetime
+
+sheet = None
 try:
-    import gspread
+    creds_json_str = os.getenv("CREDENTIALS_JSON")
+    if not creds_json_str:
+        raise ValueError("CREDENTIALS_JSON не задана")
+    
+    creds_info = json.loads(creds_json_str)
     from google.oauth2.service_account import Credentials
-    SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-    creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
+    from google.auth.transport.requests import Request
+    from googleapiclient.discovery import build
+
+    creds = Credentials.from_service_account_info(
+        creds_info,
+        scopes=["https://www.googleapis.com/auth/spreadsheets"]
+    )
+    # Проверим, валиден ли токен
+    auth_req = Request()
+    creds.refresh(auth_req)
+
+    import gspread
     client = gspread.authorize(creds)
     sheet = client.open("theresgifts-stats").sheet1
     print("✅ Google Sheets подключён")
