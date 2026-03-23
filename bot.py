@@ -11,31 +11,24 @@ from datetime import datetime
 # === GOOGLE SHEETS INTEGRATION (без файла, через переменную) ===
 import os
 import json
-from datetime import datetime
+from google.oauth2.service_account import Credentials
+import gspread
 
 sheet = None
 try:
     creds_json_str = os.getenv("CREDENTIALS_JSON")
     if not creds_json_str:
         raise ValueError("CREDENTIALS_JSON не задана")
-    
+
     creds_info = json.loads(creds_json_str)
-    from google.oauth2.service_account import Credentials
-    from google.auth.transport.requests import Request
-    from googleapiclient.discovery import build
-
-    creds = Credentials.from_service_account_info(
-        creds_info,
-        SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
-]
-    )
-    # Проверим, валиден ли токен
-    auth_req = Request()
-    creds.refresh(auth_req)
-
-    import gspread
+    
+    # ✅ Правильная передача scopes
+    SCOPES = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
+    
     client = gspread.authorize(creds)
     sheet = client.open("theresgifts-stats").sheet1
     print("✅ Google Sheets подключён")
