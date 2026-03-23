@@ -8,12 +8,14 @@ import asyncio
 import os
 from datetime import datetime
 
-# === GOOGLE SHEETS INTEGRATION ===
+#GOOGLE SHEETS INTEGRATION
 import json
 from google.oauth2.service_account import Credentials
 import gspread
 
-sheet = None
+raw_sheet = None      # Первый лист: сырые события
+analytics_sheet = None  # Второй лист: для аналитики
+
 try:
     creds_json_str = os.getenv("CREDENTIALS_JSON")
     if not creds_json_str:
@@ -26,30 +28,38 @@ try:
     ]
     creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
     client = gspread.authorize(creds)
-    sheet = client.open("theresgifts-stats").sheet1
-    print("✅ Google Sheets подключён")
+    
+    spreadsheet = client.open("theresgifts-stats")
+    raw_sheet = spreadsheet.sheet1  # Лист1: События
+    analytics_sheet = spreadsheet.worksheet("Аналитика")  # Лист2: Аналитика
+    
+    print("✅ Google Sheets подключён (2 листа)")
 except Exception as e:
     print(f"⚠️ Google Sheets НЕ подключён: {e}")
-    sheet = None
+    raw_sheet = None
+    analytics_sheet = None
 
 def log_to_sheet(user_id, action, category=None, item_name=None):
-    """Логирует событие с названием подарка вместо URL"""
-    if not sheet:
-        return
-    try:
-        row = [
-            datetime.now().isoformat(),
-            str(user_id),
-            action,
-            category or "",
-            item_name or ""
-        ]
-        sheet.append_row(row)
-        print(f"📊 Запись: {action} | {category} | {item_name}")
-    except Exception as e:
-        print(f"❌ Ошибка записи: {e}")
+    timestamp = datetime.now().isoformat()
+    row = [timestamp, str(user_id), action, category or "", item_name or ""]
+    
+    # Запись в первый лист (сырые данные)
+    if raw_sheet:
+        try:
+            raw_sheet.append_row(row)
+        except Exception as e:
+            print(f"❌ Ошибка записи в сырой лист: {e}")
+    
+    # Запись во второй лист (аналитика) — только события start и view
+    if analytics_sheet and action in ("start", "view"):
+        try:
+            analytics_sheet.append_row(row)
+        except Exception as e:
+            print(f"❌ Ошибка записи в аналитический лист: {e}")
+    
+    print(f"📊 Запись: {action} | {category} | {item_name}")
 
-# === TELEGRAM BOT SETUP ===
+#TELEGRAM BOT SETUP
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("❌ Переменная окружения BOT_TOKEN не задана!")
