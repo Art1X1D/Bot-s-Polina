@@ -48,18 +48,23 @@ GIFTS = {
         }
     ],
     "hobbies": [
-        {
-            "photo": "https://papershoot.ru/paper-camera/tproduct/1208941196-929640940941-vintage-1925",
-            "caption": "Бумажная камера со сменными кейсами",
-            "url": "https://papershoot.ru/catalog"
-        }
+        { 
+            "photo": "https://papershoot.ru/paper-camera/tproduct/1208941196-929640940941-vintage-1925", 
+            "caption": "Бумажная камера со сменными кейсами", 
+            "url": "https://papershoot.ru/catalog" 
+        },
     ],
     "sport": [
-        {
-            "photo": "https://market.yandex.ru/card/flyaga-silikonovaya-myagkaya-s-remeshkom-dlya-gidratora-dlya-bega-500ml",
-            "caption": "Мягкая фляга для бега и походов",
-            "url": "https://market.yandex.ru/card/flyaga-silikonovaya-myagkaya-s-remeshkom-dlya-gidratora-dlya-bega-500ml"
-        }
+          { 
+            "photo": "https://market.yandex.ru/card/flyaga-silikonovaya-myagkaya-s-remeshkom-dlya-gidratora-dlya-bega-500ml", 
+            "caption": "Мягкая фляга для бега и походов", 
+            "url": "https://market.yandex.ru/card/flyaga-silikonovaya-myagkaya-s-remeshkom-dlya-gidratora-dlya-bega-500ml" 
+        },
+  { 
+            "photo": "https://aliexpress.ru/item/1005006255577739.html", 
+            "caption": "Ручной тренажер для большого тенниса", 
+            "url": "https://www.wildberries.ru/catalog/331956677/detail.aspx" 
+        },
     ],
     "health": [
         {
