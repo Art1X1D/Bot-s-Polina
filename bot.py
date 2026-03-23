@@ -26,7 +26,10 @@ try:
 
     creds = Credentials.from_service_account_info(
         creds_info,
-        scopes=["https://www.googleapis.com/auth/spreadsheets"]
+        SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
     )
     # Проверим, валиден ли токен
     auth_req = Request()
