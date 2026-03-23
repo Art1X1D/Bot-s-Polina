@@ -79,14 +79,14 @@ GIFTS = {
         {
             "photo": "https://optim.tildacdn.com/stor3533-3938-4764-b831-663332343431/-/format/webp/74328538.jpg.webp",
             "caption": "Уютный плед для дома 🏡",
-            "url": "https://www.ozon.ru/product/fotofon-hromakey-1-5h2-metra-chernyy-606611928/?at=Rltyl7l9kFX2owV8CWlXGPRsJqAzBMtPpORxoFK7V1Rq"
+            "url": ""url": "https://papershoot.ru/catalog""
         }
     ],
     "style": [
         {
             "photo": "https://ir.ozone.ru/s3/multimedia-1-h/7512943697.jpg",
             "caption": "Чёрный фон",
-            "url": "https://www.ozon.ru/product/fotofon-hromakey-1-5h2-metra-chernyy-606611928/?at=Rltyl7l9kFX2owV8CWlXGPRsJqAzBMtPpORxoFK7V1Rq"
+            "url": ""url": "https://papershoot.ru/catalog""
         }
     ],
     "hobbies": [
@@ -100,19 +100,19 @@ GIFTS = {
         {
             "photo": "https://img-edg.joomcdn.net/eb767a9d1cf723fbc9cb3cd3682484a14a8ab921_original.jpeg",
             "caption": "Мягкая фляга для бега и походов",
-            "url": "https://www.ozon.ru/product/myagkaya-flyaga-dlya-bega-i-pohodov-500ml-3486547021/?__rr=1&abt_att=1&origin_referer=www.bing.com"
+            "url": ""url": "https://papershoot.ru/catalog""
         },
         {
             "photo": "https://ae04.alicdn.com/kf/S9c6601c12b87435abd95c850f1ca5db3k.jpg_640x640.jpg",
             "caption": "Ручной тренажер для большого тенниса",
-            "url": "https://www.wildberries.ru/catalog/331956677/detail.aspx"
+            "url": ""url": "https://papershoot.ru/catalog""
         }
     ],
     "health": [
         {
             "photo": "https://ae04.alicdn.com/kf/S9c6601c12b87435abd95c850f1ca5db3k.jpg_640x640.jpg",
             "caption": "Ручной тренажер для большого тенниса",
-            "url": "https://www.wildberries.ru/catalog/331956677/detail.aspx"
+            "url": ""url": "https://papershoot.ru/catalog""
         }
     ],
     #Аналогично можно добавлять различные категории
@@ -222,14 +222,6 @@ async def handle_buy(callback: CallbackQuery, state: FSMContext):
     item = gifts[index]
     # Удаляем ВСЕ whitespace-символы
     clean_url = "".join(item["url"].split())
-
-    # Блокируем Yandex
-    if "yandex" in clean_url.lower():
-        await callback.answer(
-            "Переход временно недоступен. Попробуйте другой товар.",
-            show_alert=True
-        )
-        return
 
     # Проверка формата
     if not clean_url.startswith(("http://", "https://")):
