@@ -195,7 +195,7 @@ async def navigate_gifts(callback: CallbackQuery, state: FSMContext):
         await callback.message.edit_media(media=media, reply_markup=gift_nav_kb(cat, index, len(gifts)))
         await state.update_data(gift_index=index)
         
-        log_to_sheet(callback.from_user.id, "buy", category=cat, url=item["url"])
+        log_to_sheet(callback.from_user.id, "view", category=cat, url=item["url"])
     except Exception as e:
         print(f"Ошибка при навигации: {e}")
         await callback.answer("Ошибка загрузки 😕", show_alert=True)
