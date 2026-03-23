@@ -16,7 +16,7 @@ import gspread
 raw_sheet = None      # Первый лист: сырые события
 analytics_sheet = None  # Второй лист: для аналитики
 
-# Агрегированные данные (в памяти)
+# Агрегированные данные 
 unique_users = set()
 category_counts = {}
 item_counts = {}
@@ -35,7 +35,7 @@ try:
     client = gspread.authorize(creds)
     
     spreadsheet = client.open("theresgifts-stats")
-    raw_sheet = spreadsheet.sheet1  # Лист1: События
+    raw_sheet = spreadsheet.sheet1  # Лист1: Статистика
     analytics_sheet = spreadsheet.worksheet("Аналитика")  # Лист2: Аналитика
     
     print("✅ Google Sheets подключён (2 листа)")
@@ -44,50 +44,42 @@ except Exception as e:
     raw_sheet = None
     analytics_sheet = None
 
-def update_analytics(user_id, action, category=None, item_name=None):
-    """Обновляет агрегированную статистику и записывает в лист 'Аналитика'"""
-    global unique_users, category_counts, item_counts
-
-    # Уникальные пользователи
-    unique_users.add(str(user_id))
-
-    # Подсчёт просмотров
-    if action == "view":
-        if category:
-            category_counts[category] = category_counts.get(category, 0) + 1
-        if item_name:
-            item_counts[item_name] = item_counts.get(item_name, 0) + 1
-
-    # Запись в лист 'Аналитика'
+def write_detailed_analytics():
     if not analytics_sheet:
         return
-
     try:
-        # Формируем строку итогов
-        total_users = len(unique_users)
-        cats_str = "; ".join([f"{k}: {v}" for k, v in sorted(category_counts.items())])
-        items_str = "; ".join([f"{k}: {v}" for k, v in sorted(item_counts.items())])
-
-        # Очищаем и перезаписываем лист
+        
         analytics_sheet.clear()
         analytics_sheet.update([[
-            "Время последнего обновления",
-            "Уникальные пользователи",
-            "Популярность по категориям",
-            "Популярность по подаркам"
+            "Тип", "Имя", "Количество", "Категория"
         ]])
-        analytics_sheet.append_row([
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            total_users,
-            cats_str,
-            items_str
-        ])
-        print(f"📊 Аналитика обновлена: {total_users} уникальных пользователей")
+
+        # Уникальные пользователи
+        analytics_sheet.append_row(["Уникальные пользователи", "", len(unique_users), ""])
+
+        # Категории
+        for cat, cnt in sorted(category_counts.items()):
+            analytics_sheet.append_row(["Категория", cat, cnt, ""])
+
+        # Подарки
+        for item, cnt in sorted(item_counts.items()):
+            # Определяем категорию по имени (простой способ — искать в GIFTS)
+            found_cat = ""
+            for cat, gifts in GIFTS.items():
+                for g in gifts:
+                    if g["caption"] == item:
+                        found_cat = cat
+                        break
+                if found_cat:
+                    break
+            analytics_sheet.append_row(["Подарок", item, cnt, found_cat])
+
+        print("✅ Детальная аналитика записана в лист 'Аналитика'")
     except Exception as e:
-        print(f"❌ Ошибка записи в Аналитику: {e}")
+        print(f"❌ Ошибка записи детальной аналитики: {e}")
 
 def log_to_sheet(user_id, action, category=None, item_name=None):
-    """Логирует событие и обновляет аналитику"""
+    """Логирует событие и обновляет агрегированную аналитику"""
     timestamp = datetime.now().isoformat()
     row = [timestamp, str(user_id), action, category or "", item_name or ""]
     
@@ -98,10 +90,18 @@ def log_to_sheet(user_id, action, category=None, item_name=None):
         except Exception as e:
             print(f"❌ Ошибка записи в Статистику: {e}")
 
-    # Обновление агрегированной аналитики
-    update_analytics(user_id, action, category, item_name)
+    # Обновление агрегатов в памяти
+    unique_users.add(str(user_id))
+    if action == "view":
+        if category:
+            category_counts[category] = category_counts.get(category, 0) + 1
+        if item_name:
+            item_counts[item_name] = item_counts.get(item_name, 0) + 1
 
-#TELEGRAM BOT SETUP
+    # Запись структурированной аналитики
+    write_detailed_analytics()
+
+# === TELEGRAM BOT SETUP ===
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("❌ Переменная окружения BOT_TOKEN не задана!")
@@ -121,7 +121,7 @@ CATEGORIES = {
     "health": "🧘‍♀️ Здоровье и красота",
 }
 
-#Подарки
+#Подарки 
 GIFTS = {
     "home": [
         {
@@ -156,7 +156,7 @@ GIFTS = {
             "url": "https://www.ozon.ru/product/nabor-dlya-bolshogo-tennisa-1762914482/?at=oZt6GZrXNT588m8wsBYLwp7TW3m0oKID3PEG3CgJp4n4"
         }
     ],
-    "health": [],  
+    "health": [],  # пустая категория 
 }
 
 class GiftState(StatesGroup):
@@ -226,7 +226,7 @@ async def show_first_gift(callback: CallbackQuery, state: FSMContext):
         await state.set_state(GiftState.showing_gifts)
         log_to_sheet(
             user_id=callback.from_user.id,
-            action="view",  
+            action="view",
             category=cat,
             item_name=item["caption"]
         )
