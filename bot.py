@@ -15,9 +15,9 @@ from datetime import datetime
 
 sheet = None
 try:
-    creds_json_str = os.getenv("CREDENTIALS_JSON")
+    creds_json_str = os.getenv("CREDENTIALS.json")
     if not creds_json_str:
-        raise ValueError("CREDENTIALS_JSON не задана")
+        raise ValueError("CREDENTIALS.json не задана")
     
     creds_info = json.loads(creds_json_str)
     from google.oauth2.service_account import Credentials
