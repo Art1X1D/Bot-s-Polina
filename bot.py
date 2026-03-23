@@ -35,40 +35,40 @@ CATEGORIES = {
 GIFTS = {
     "home": [
         {
-            "photo": "https://ir.ozone.ru/s3/multimedia-1-h/7512943697.jpg",
+            "photo": "https://optim.tildacdn.com/stor3533-3938-4764-b831-663332343431/-/format/webp/74328538.jpg.webp",
             "caption": "Уютный плед для дома 🏡",
-            "url": "https://t.me/pike_msk_bot?start=home_1"
+            "url": "https://www.ozon.ru/product/fotofon-hromakey-1-5h2-metra-chernyy-606611928/?at=Rltyl7l9kFX2owV8CWlXGPRsJqAzBMtPpORxoFK7V1Rq"
         }
     ],
     "style": [
         {
             "photo": "https://ir.ozone.ru/s3/multimedia-1-h/7512943697.jpg",
             "caption": "Чёрный фон",
-            "url": "https://t.me/pike_msk_bot?start=style_1"
+            "url": "https://www.ozon.ru/product/fotofon-hromakey-1-5h2-metra-chernyy-606611928/?at=Rltyl7l9kFX2owV8CWlXGPRsJqAzBMtPpORxoFK7V1Rq"
         }
     ],
     "hobbies": [
         { 
-            "photo": "https://papershoot.ru/paper-camera/tproduct/1208941196-929640940941-vintage-1925", 
+            "photo": "https://optim.tildacdn.com/stor6638-3064-4331-b233-613063636338/-/format/webp/63972773.png.webp", 
             "caption": "Бумажная камера со сменными кейсами", 
             "url": "https://papershoot.ru/catalog" 
         },
     ],
     "sport": [
           { 
-            "photo": "https://market.yandex.ru/card/flyaga-silikonovaya-myagkaya-s-remeshkom-dlya-gidratora-dlya-bega-500ml", 
+            "photo": "https://img-edg.joomcdn.net/eb767a9d1cf723fbc9cb3cd3682484a14a8ab921_original.jpeg", 
             "caption": "Мягкая фляга для бега и походов", 
-            "url": "https://market.yandex.ru/card/flyaga-silikonovaya-myagkaya-s-remeshkom-dlya-gidratora-dlya-bega-500ml" 
+            "url": "https://www.ozon.ru/product/myagkaya-flyaga-dlya-bega-i-pohodov-500ml-3486547021/?__rr=1&abt_att=1&origin_referer=www.bing.com" 
         },
   { 
-            "photo": "https://aliexpress.ru/item/1005006255577739.html", 
+            "photo": "https://ae04.alicdn.com/kf/S9c6601c12b87435abd95c850f1ca5db3k.jpg_640x640.jpg", 
             "caption": "Ручной тренажер для большого тенниса", 
             "url": "https://www.wildberries.ru/catalog/331956677/detail.aspx" 
         },
     ],
     "health": [
         {
-            "photo": "https://aliexpress.ru/item/1005006255577739.html",
+            "photo": "https://ae04.alicdn.com/kf/S9c6601c12b87435abd95c850f1ca5db3k.jpg_640x640.jpg",
             "caption": "Ручной тренажер для большого тенниса",
             "url": "https://www.wildberries.ru/catalog/331956677/detail.aspx"
         }
