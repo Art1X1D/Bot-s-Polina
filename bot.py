@@ -222,15 +222,23 @@ async def handle_buy(callback: CallbackQuery, state: FSMContext):
     item = gifts[index]
     clean_url = item["url"].strip()
 
-    #Проверка: URL должен быть валидным
+    #Проверка 1: блокируем проблемные домены 
+    if "market.yandex.ru" in clean_url:
+        await callback.answer(
+            "Товар временно недоступен для перехода. Попробуйте позже.",
+            show_alert=True
+        )
+        return
+
+    # Проверка 2: URL
     if not clean_url.startswith(("http://", "https://")):
-        await callback.answer("Ссылка на товар повреждена", show_alert=True)
+        await callback.answer("Ссылка повреждена", show_alert=True)
         return
 
     # Логируем только реальное нажатие «Купить»
     log_to_sheet(callback.from_user.id, "buy", category=cat, url=clean_url)
 
- 
+    #Открываем ссылку
     await callback.answer(
         text="Переход к товару...",
         url=clean_url,
