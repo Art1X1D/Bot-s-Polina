@@ -6,8 +6,38 @@ from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 import asyncio
 import os
+from datetime import datetime
 
-# 🔑 Получаем токен из переменной окружения (для Railway/Render)
+# === GOOGLE SHEETS INTEGRATION ===
+try:
+    import gspread
+    from google.oauth2.service_account import Credentials
+    SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+    creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
+    client = gspread.authorize(creds)
+    sheet = client.open("theresgifts-stats").sheet1
+    print("✅ Google Sheets подключён")
+except Exception as e:
+    print(f"⚠️ Google Sheets НЕ подключён: {e}")
+    sheet = None
+
+def log_to_sheet(user_id, action, category=None, url=None):
+    if not sheet:
+        return
+    try:
+        row = [
+            datetime.now().isoformat(),
+            str(user_id),
+            action,
+            category or "",
+            url or ""
+        ]
+        sheet.append_row(row)
+        print(f"📊 Запись в таблицу: {action} | {category}")
+    except Exception as e:
+        print(f"❌ Ошибка записи в Google Sheets: {e}")
+
+# === TELEGRAM BOT SETUP ===
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("❌ Переменная окружения BOT_TOKEN не задана!")
@@ -31,7 +61,7 @@ CATEGORIES = {
     "date": "🍸 Куда сводить",
 }
 
-# 💝 Подарки — только заполненные категории
+# 💝 Подарки — все URL очищены от пробелов
 GIFTS = {
     "home": [
         {
@@ -48,23 +78,23 @@ GIFTS = {
         }
     ],
     "hobbies": [
-        { 
-            "photo": "https://optim.tildacdn.com/stor6638-3064-4331-b233-613063636338/-/format/webp/63972773.png.webp", 
-            "caption": "Бумажная камера со сменными кейсами", 
-            "url": "https://papershoot.ru/catalog" 
-        },
+        {
+            "photo": "https://optim.tildacdn.com/stor6638-3064-4331-b233-613063636338/-/format/webp/63972773.png.webp",
+            "caption": "Бумажная камера со сменными кейсами",
+            "url": "https://papershoot.ru/catalog"
+        }
     ],
     "sport": [
-          { 
-            "photo": "https://img-edg.joomcdn.net/eb767a9d1cf723fbc9cb3cd3682484a14a8ab921_original.jpeg", 
-            "caption": "Мягкая фляга для бега и походов", 
-            "url": "https://www.ozon.ru/product/myagkaya-flyaga-dlya-bega-i-pohodov-500ml-3486547021/?__rr=1&abt_att=1&origin_referer=www.bing.com" 
+        {
+            "photo": "https://img-edg.joomcdn.net/eb767a9d1cf723fbc9cb3cd3682484a14a8ab921_original.jpeg",
+            "caption": "Мягкая фляга для бега и походов",
+            "url": "https://www.ozon.ru/product/myagkaya-flyaga-dlya-bega-i-pohodov-500ml-3486547021/?__rr=1&abt_att=1&origin_referer=www.bing.com"
         },
-  { 
-            "photo": "https://ae04.alicdn.com/kf/S9c6601c12b87435abd95c850f1ca5db3k.jpg_640x640.jpg", 
-            "caption": "Ручной тренажер для большого тенниса", 
-            "url": "https://www.wildberries.ru/catalog/331956677/detail.aspx" 
-        },
+        {
+            "photo": "https://ae04.alicdn.com/kf/S9c6601c12b87435abd95c850f1ca5db3k.jpg_640x640.jpg",
+            "caption": "Ручной тренажер для большого тенниса",
+            "url": "https://www.wildberries.ru/catalog/331956677/detail.aspx"
+        }
     ],
     "health": [
         {
@@ -73,7 +103,6 @@ GIFTS = {
             "url": "https://www.wildberries.ru/catalog/331956677/detail.aspx"
         }
     ],
-    # Остальные категории можно добавить позже
 }
 
 class GiftState(StatesGroup):
@@ -83,7 +112,6 @@ class GiftState(StatesGroup):
 def categories_kb():
     builder = InlineKeyboardBuilder()
     for key, label in CATEGORIES.items():
-        # Показываем только категории, где есть подарки
         if key in GIFTS and GIFTS[key]:
             builder.button(text=label, callback_data=f"cat:{key}")
     builder.adjust(2)
@@ -97,7 +125,6 @@ def gift_nav_kb(category: str, index: int, total: int):
     if index < total - 1:
         builder.button(text="▶️ Вперёд", callback_data=f"gift:{category}:{index+1}")
     builder.button(text="🏠 Главное меню", callback_data="main_menu")
-    
     if total == 1:
         builder.adjust(1, 1)
     elif index == 0 or index == total - 1:
@@ -109,6 +136,7 @@ def gift_nav_kb(category: str, index: int, total: int):
 @router.message(Command("start"))
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
+    log_to_sheet(message.from_user.id, "start")
     await message.answer(
         "Привет! Это бот Telegram-канала «Что тебе подарить?». "
         "Здесь есть добрые и нужные подарки на весь год 🪄\n\n"
@@ -136,12 +164,16 @@ async def show_first_gift(callback: CallbackQuery, state: FSMContext):
         await callback.answer("Подарков в этой категории пока нет 😢", show_alert=True)
         return
 
-    await state.update_data(category=cat, gifts=GIFTS[cat], gift_index=0)
-    await state.set_state(GiftState.showing_gifts)
-
     item = GIFTS[cat][0]
-    media = InputMediaPhoto(media=item["photo"], caption=item["caption"])
-    await callback.message.edit_media(media=media, reply_markup=gift_nav_kb(cat, 0, len(GIFTS[cat])))
+    try:
+        media = InputMediaPhoto(media=item["photo"], caption=item["caption"])
+        await callback.message.edit_media(media=media, reply_markup=gift_nav_kb(cat, 0, len(GIFTS[cat])))
+        await state.update_data(category=cat, gifts=GIFTS[cat], gift_index=0)
+        await state.set_state(GiftState.showing_gifts)
+        log_to_sheet(callback.from_user.id, "category", category=cat)
+    except Exception as e:
+        print(f"Ошибка загрузки фото: {e}")
+        await callback.answer("Не удалось загрузить подарок 😕", show_alert=True)
 
 @router.callback_query(GiftState.showing_gifts, F.data.startswith("gift:"))
 async def navigate_gifts(callback: CallbackQuery, state: FSMContext):
@@ -152,9 +184,14 @@ async def navigate_gifts(callback: CallbackQuery, state: FSMContext):
         return
 
     item = gifts[index]
-    media = InputMediaPhoto(media=item["photo"], caption=item["caption"])
-    await state.update_data(gift_index=index)
-    await callback.message.edit_media(media=media, reply_markup=gift_nav_kb(cat, index, len(gifts)))
+    try:
+        media = InputMediaPhoto(media=item["photo"], caption=item["caption"])
+        await callback.message.edit_media(media=media, reply_markup=gift_nav_kb(cat, index, len(gifts)))
+        await state.update_data(gift_index=index)
+        log_to_sheet(callback.from_user.id, "buy", category=cat, url=item["url"])
+    except Exception as e:
+        print(f"Ошибка при навигации: {e}")
+        await callback.answer("Ошибка загрузки 😕", show_alert=True)
 
 async def main():
     print("✅ Бот запущен!")
