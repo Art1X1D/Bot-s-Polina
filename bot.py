@@ -8,8 +8,7 @@ import asyncio
 import os
 from datetime import datetime
 
-#GOOGLE SHEETS INTEGRATION (через переменную) 
-import os
+#GOOGLE SHEETS INTEGRATION
 import json
 from google.oauth2.service_account import Credentials
 import gspread
@@ -21,14 +20,11 @@ try:
         raise ValueError("CREDENTIALS_JSON не задана")
 
     creds_info = json.loads(creds_json_str)
-    
-   
     SCOPES = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
     ]
     creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
-    
     client = gspread.authorize(creds)
     sheet = client.open("theresgifts-stats").sheet1
     print("✅ Google Sheets подключён")
@@ -70,23 +66,22 @@ CATEGORIES = {
     "hobbies": "🧩 Увлечения",
     "style": "👜 Стиль",
     "health": "🧘‍♀️ Здоровье и красота",
-    #Сюда можно добавлять названия категорий
 }
 
-#Подарки — все URL очищены от пробелов
+#Подарки 
 GIFTS = {
     "home": [
         {
             "photo": "https://optim.tildacdn.com/stor3533-3938-4764-b831-663332343431/-/format/webp/74328538.jpg.webp",
             "caption": "Уютный плед для дома 🏡",
-            "url": ""url": "https://papershoot.ru/catalog""
+            "url": "https://papershoot.ru/catalog"
         }
     ],
     "style": [
         {
             "photo": "https://ir.ozone.ru/s3/multimedia-1-h/7512943697.jpg",
             "caption": "Чёрный фон",
-            "url": ""url": "https://papershoot.ru/catalog""
+            "url": "https://papershoot.ru/catalog"
         }
     ],
     "hobbies": [
@@ -100,22 +95,21 @@ GIFTS = {
         {
             "photo": "https://img-edg.joomcdn.net/eb767a9d1cf723fbc9cb3cd3682484a14a8ab921_original.jpeg",
             "caption": "Мягкая фляга для бега и походов",
-            "url": ""url": "https://papershoot.ru/catalog""
+            "url": "https://papershoot.ru/catalog"
         },
         {
             "photo": "https://ae04.alicdn.com/kf/S9c6601c12b87435abd95c850f1ca5db3k.jpg_640x640.jpg",
             "caption": "Ручной тренажер для большого тенниса",
-            "url": ""url": "https://papershoot.ru/catalog""
+            "url": "https://papershoot.ru/catalog"
         }
     ],
     "health": [
         {
             "photo": "https://ae04.alicdn.com/kf/S9c6601c12b87435abd95c850f1ca5db3k.jpg_640x640.jpg",
             "caption": "Ручной тренажер для большого тенниса",
-            "url": ""url": "https://papershoot.ru/catalog""
+            "url": "https://papershoot.ru/catalog"
         }
     ],
-    #Аналогично можно добавлять различные категории
 }
 
 class GiftState(StatesGroup):
@@ -134,7 +128,8 @@ def gift_nav_kb(category: str, index: int, total: int):
     builder = InlineKeyboardBuilder()
     if index > 0:
         builder.button(text="🔙 Назад", callback_data=f"gift:{category}:{index-1}")
-    builder.button(text="💳 Купить", callback_data=f"buy:{category}:{index}")
+    
+    builder.button(text="💳 Купить", url=GIFTS[category][index]["url"])
     if index < total - 1:
         builder.button(text="▶️ Вперёд", callback_data=f"gift:{category}:{index+1}")
     builder.button(text="🏠 Главное меню", callback_data="main_menu")
@@ -202,39 +197,10 @@ async def navigate_gifts(callback: CallbackQuery, state: FSMContext):
         await callback.message.edit_media(media=media, reply_markup=gift_nav_kb(cat, index, len(gifts)))
         await state.update_data(gift_index=index)
         
+        log_to_sheet(callback.from_user.id, "buy", category=cat, url=item["url"])
     except Exception as e:
         print(f"Ошибка при навигации: {e}")
         await callback.answer("Ошибка загрузки 😕", show_alert=True)
-
-@router.callback_query(F.data.startswith("buy:"))
-async def handle_buy(callback: CallbackQuery, state: FSMContext):
-    parts = callback.data.split(":")
-    if len(parts) != 3:
-        return
-    _, cat, idx_str = parts
-    index = int(idx_str)
-
-    gifts = GIFTS.get(cat, [])
-    if index < 0 or index >= len(gifts):
-        await callback.answer("Товар не найден", show_alert=True)
-        return
-
-    item = gifts[index]
-    # Удаляем ВСЕ whitespace-символы
-    clean_url = "".join(item["url"].split())
-
-    # Проверка формата
-    if not clean_url.startswith(("http://", "https://")):
-        await callback.answer("Ссылка повреждена", show_alert=True)
-        return
-
-    log_to_sheet(callback.from_user.id, "buy", category=cat, url=clean_url)
-
-    await callback.answer(
-        text="Переход к товару...",
-        url=clean_url,
-        show_alert=False
-    )
 
 async def main():
     print("✅ Бот запущен!")
